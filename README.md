@@ -290,7 +290,7 @@ Contributions are welcome! Here's how you can help:
 ## 👤 Author
 
 **Your Name**
-- GitHub: [@yourusername](https://github.com/Dansoko22md)
+- GitHub: [@Dansoko22md](https://github.com/Dansoko22md)
 - LinkedIn: [linkedin.com](https://www.linkedin.com/in/moussa-dansoko-a6a357172/)
 
 ## 🙏 Acknowledgments
