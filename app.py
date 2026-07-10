@@ -5,6 +5,7 @@ import os
 import json
 import re
 from urllib.parse import quote_plus
+import time
 
 app = Flask(__name__)
 CORS(app)
@@ -12,7 +13,7 @@ CORS(app)
 # ============================================================
 # CHAVES API
 # ============================================================
-GROQ_API_KEY = os.environ.get('GROQ_API_KEY', 'SUA_CHAVE_GROQ_AQUI')
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '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')
 GROQ_API_KEY = GROQ_API_KEY.strip()
 
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
@@ -36,30 +37,34 @@ PERSONALITIES = {
 }
 
 # ============================================================
-# SEUS MODELOS (exatamente como você usa!)
+# MODELOS
 # ============================================================
 AVAILABLE_MODELS = [
-    "llama-3.3-70b-versatile",      # Melhor qualidade
-    "llama-3.1-70b-versatile",      # Alta qualidade
-    "llama-3.1-8b-instant",         # Rápido e bom
-    "gemma2-9b-it",                 # Google Gemma 2
-    "deepseek-r1-distill-llama-70b" # DeepSeek
+    "llama-3.3-70b-versatile",
+    "llama-3.1-70b-versatile",
+    "llama-3.1-8b-instant",
+    "gemma2-9b-it",
+    "deepseek-r1-distill-llama-70b"
 ]
 
 # ============================================================
-# FUNÇÃO DE PESQUISA NA WEB
+# FUNÇÃO DE PESQUISA - CORRIGIDA
 # ============================================================
 
 def search_web(query):
-    """Pesquisa na web usando a API do DuckDuckGo (gratuita)"""
+    """Pesquisa na web usando a API do DuckDuckGo"""
     try:
+        print(f"🔍 A pesquisar: {query}")
+        
+        # Usar a API do DuckDuckGo
         url = f"https://api.duckduckgo.com/?q={quote_plus(query)}&format=json&pretty=1"
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=15)
         
         if response.status_code == 200:
             data = response.json()
             results = []
             
+            # Resultado principal
             if data.get('Abstract'):
                 results.append({
                     'title': data.get('Heading', 'Resultado'),
@@ -67,10 +72,12 @@ def search_web(query):
                     'link': data.get('AbstractURL', '#')
                 })
             
+            # Resultados relacionados
             for item in data.get('RelatedTopics', [])[:5]:
                 if 'Text' in item:
                     text = item['Text']
                     link = item.get('FirstURL', '#')
+                    # Separar título do texto
                     parts = text.split(' - ', 1)
                     title = parts[0] if len(parts) > 0 else text[:50]
                     snippet = parts[1] if len(parts) > 1 else text
@@ -80,28 +87,31 @@ def search_web(query):
                         'link': link
                     })
             
-            return results[:5]
+            print(f"✅ Encontrados {len(results)} resultados")
+            return results
         else:
+            print(f"❌ Erro na pesquisa: {response.status_code}")
             return []
     except Exception as e:
-        print(f"Erro na pesquisa: {str(e)}")
+        print(f"❌ Erro na pesquisa: {str(e)}")
         return []
 
 def format_search_results(results):
+    """Formata os resultados para o prompt"""
     if not results:
         return "Nenhum resultado encontrado."
     
-    formatted = "Resultados da pesquisa:\n\n"
+    formatted = "RESULTADOS DA PESQUISA:\n\n"
     for i, r in enumerate(results, 1):
         formatted += f"{i}. {r['title']}\n"
         formatted += f"   {r['snippet']}\n"
         if r['link'] and r['link'] != '#':
-            formatted += f"   Link: {r['link']}\n"
+            formatted += f"   Fonte: {r['link']}\n"
         formatted += "\n"
     return formatted
 
 # ============================================================
-# ROTA PRINCIPAL
+# ROTA PRINCIPAL - CORRIGIDA
 # ============================================================
 
 @app.route('/api/chat', methods=['POST'])
@@ -118,43 +128,56 @@ def chat():
         user_message = messages[-1]['content'] if messages else ""
         system_prompt = PERSONALITIES.get(personality_key, PERSONALITIES["default"])
 
-        # Detectar se deve pesquisar
-        search_keywords = ['pesquisar', 'buscar', 'procurar', 'google', 'internet', 'atual', 'agora', 'notícia', 'evento']
-        should_search = search_enabled or any(kw in user_message.lower() for kw in search_keywords)
-        
+        print("=" * 60)
+        print(f"📥 Mensagem: {user_message}")
+        print(f"🔍 Pesquisa ativada: {search_enabled}")
+
+        # ===== SEMPRE PESQUISAR SE ESTIVER ATIVADO =====
         search_results_text = ""
         results = []
-        if should_search:
-            print(f"🔍 Pesquisando: {user_message}")
+        
+        if search_enabled:
+            print("🔍 A pesquisar na web...")
             results = search_web(user_message)
             if results:
                 search_results_text = format_search_results(results)
-                print(f"✅ Encontrados {len(results)} resultados")
+                print(f"✅ {len(results)} resultados encontrados")
             else:
-                search_results_text = "Não foi possível obter resultados da pesquisa."
+                search_results_text = "Não foi possível obter resultados da pesquisa. Responda com o seu conhecimento geral."
+                print("❌ Nenhum resultado encontrado")
+        else:
+            print("ℹ️ Pesquisa desativada")
+            search_results_text = ""
 
-        # Construir prompt
+        # ===== CONSTRUIR PROMPT =====
         if search_results_text:
             prompt = f"""{system_prompt}
 
-Informações atualizadas da internet sobre a pergunta do usuário:
+ATENÇÃO: O USUÁRIO ATIVOU O MODO DE PESQUISA NA WEB.
+Use as informações abaixo para responder.
+
 {search_results_text}
 
-Com base nas informações acima, responda à pergunta do usuário de forma completa e útil, citando as fontes quando possível.
+Com base nas informações ACIMA, responda à pergunta do usuário de forma completa, citando as fontes.
+Se a informação não estiver nos resultados, diga que não encontrou e use seu conhecimento geral.
 
 Pergunta do usuário: {user_message}
 
-Resposta:"""
+Resposta (em português, com base na pesquisa):"""
         else:
             prompt = f"""{system_prompt}
 
 Pergunta do usuário: {user_message}
 
-Resposta:"""
+Resposta (em português):"""
 
-        # Chamar a API com SEUS modelos
+        print(f"📤 Prompt enviado (primeiros 200 caracteres): {prompt[:200]}...")
+
+        # ===== CHAMAR A API =====
         for model in AVAILABLE_MODELS:
             try:
+                print(f"🔄 A tentar modelo: {model}")
+                
                 payload = {
                     "model": model,
                     "messages": [
@@ -168,21 +191,27 @@ Resposta:"""
 
                 if response.status_code == 200:
                     result = response.json()
+                    resposta = result['choices'][0]['message']['content']
+                    print(f"✅ Sucesso com {model}")
+                    
                     return jsonify({
-                        'content': result['choices'][0]['message']['content'],
+                        'content': resposta,
                         'model': f'groq/{model}',
                         'personality': personality_key,
-                        'search_used': should_search,
-                        'search_results': results if should_search else []
+                        'search_used': search_enabled,
+                        'search_results': results if search_enabled else []
                     }), 200
                 else:
-                    print(f"Erro no modelo {model}: {response.status_code} - {response.text[:100]}")
+                    print(f"❌ Erro no modelo {model}: {response.status_code}")
+                    
             except Exception as e:
-                print(f"Erro com {model}: {str(e)}")
+                print(f"❌ Exceção com {model}: {str(e)}")
                 continue
 
         return jsonify({'error': 'Nenhum modelo disponível'}), 503
+        
     except Exception as e:
+        print(f"❌ ERRO GERAL: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 # ============================================================
