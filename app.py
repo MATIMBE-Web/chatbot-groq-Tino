@@ -12,8 +12,7 @@ CORS(app)
 # ============================================================
 # CHAVES API
 # ============================================================
-GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '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
-')
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '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')
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 HEADERS = {
