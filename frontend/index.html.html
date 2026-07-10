@@ -1,11 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🤖 Chatbot Inteligente</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🧠 Chatbot com Memória</title>
+
     <style>
-        /* ===== RESET E ESTILOS GERAIS ===== */
         * {
             margin: 0;
             padding: 0;
@@ -14,47 +14,20 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            background: #f0f2f5;
             display: flex;
             justify-content: center;
             align-items: center;
+            min-height: 100vh;
             padding: 20px;
-            transition: background 0.3s ease;
+            transition: background 0.3s, color 0.3s;
         }
 
-        /* ===== MODO ESCURO ===== */
-        body.dark-mode {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        }
-
-        body.dark-mode #chat {
-            background: #1e2a4a;
+        body.dark {
+            background: #121212;
             color: #e0e0e0;
         }
 
-        body.dark-mode .message.bot {
-            background: #2a3a6a;
-            color: #e0e0e0;
-        }
-
-        body.dark-mode #input {
-            background: #2a3a6a;
-            color: #e0e0e0;
-            border-color: #4a5a8a;
-        }
-
-        body.dark-mode .header-controls button {
-            background: #2a3a6a;
-            color: #e0e0e0;
-        }
-
-        body.dark-mode .status-bar {
-            background: #1a2a4a;
-            color: #aaa;
-        }
-
-        /* ===== CONTAINER PRINCIPAL ===== */
         #chat {
             width: 100%;
             max-width: 900px;
@@ -62,86 +35,151 @@
             max-height: 800px;
             background: white;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            transition: background 0.3s ease;
+            transition: background 0.3s, box-shadow 0.3s;
         }
 
-        /* ===== HEADER ===== */
+        body.dark #chat {
+            background: #1e2a4a;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        /* HEADER */
         .header {
-            padding: 20px 25px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 14px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 10px;
+            color: white;
+            flex-shrink: 0;
         }
 
         .header h1 {
-            font-size: 22px;
+            font-size: 18px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
-        .header h1 span {
-            font-size: 28px;
-        }
-
-        .header-controls {
+        .header-actions {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
-        .header-controls button {
+        .header-actions select {
             background: rgba(255, 255, 255, 0.2);
             border: none;
             color: white;
-            padding: 8px 14px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            outline: none;
+            font-weight: 500;
+        }
+
+        .header-actions select option {
+            color: #333;
+            background: white;
+        }
+
+        .header-actions button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 6px 12px;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 14px;
             transition: background 0.2s;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
         }
 
-        .header-controls button:hover {
-            background: rgba(255, 255, 255, 0.3);
+        .header-actions button:hover {
+            background: rgba(255, 255, 255, 0.35);
         }
 
-        .header-controls button.active {
-            background: rgba(255, 255, 255, 0.4);
-        }
-
-        /* ===== ÁREA DE MENSAGENS ===== */
+        /* MENSAGENS */
         #messages {
             flex: 1;
             overflow-y: auto;
-            padding: 20px 25px;
-            background: #f8f9fa;
-            transition: background 0.3s ease;
+            padding: 20px 24px;
+            background: #fafafa;
+            transition: background 0.3s;
         }
 
-        body.dark-mode #messages {
+        body.dark #messages {
             background: #16213e;
         }
 
-        /* ===== MENSAGENS ===== */
-        .message {
+        .msg {
             margin: 12px 0;
-            padding: 12px 18px;
-            border-radius: 15px;
             max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            line-height: 1.6;
             word-wrap: break-word;
             animation: fadeIn 0.3s ease;
-            line-height: 1.6;
+        }
+
+        .msg.user {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .msg.bot {
+            background: white;
+            color: #333;
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        body.dark .msg.bot {
+            background: #2a3a6a;
+            color: #e0e0e0;
+        }
+
+        .msg .label {
+            font-size: 11px;
+            font-weight: 600;
+            opacity: 0.7;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .msg .time {
+            font-size: 10px;
+            opacity: 0.5;
+            display: block;
+            margin-top: 6px;
+        }
+
+        .msg .memory-badge {
+            font-size: 10px;
+            background: #4ade80;
+            color: #1a1a2e;
+            padding: 2px 10px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 6px;
+        }
+
+        body.dark .msg .memory-badge {
+            background: #2a5a3a;
+            color: #a0d0a0;
         }
 
         @keyframes fadeIn {
@@ -155,60 +193,20 @@
             }
         }
 
-        .message.user {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            margin-left: auto;
-            text-align: right;
-            border-bottom-right-radius: 4px;
-        }
-
-        .message.bot {
-            background: white;
-            color: #333;
-            margin-right: auto;
-            border-bottom-left-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-        }
-
-        body.dark-mode .message.bot {
-            background: #2a3a6a;
-            color: #e0e0e0;
-        }
-
-        .message .role {
-            font-size: 11px;
-            font-weight: 600;
-            opacity: 0.7;
-            margin-bottom: 4px;
-            display: block;
-        }
-
-        .message.user .role {
-            opacity: 0.8;
-        }
-
-        .message .time {
-            font-size: 10px;
-            opacity: 0.5;
-            margin-top: 4px;
-            display: block;
-        }
-
-        /* ===== MENSAGEM DE DIGITAÇÃO ===== */
+        /* DIGITAÇÃO */
         .typing-indicator {
             display: none;
             padding: 12px 18px;
             margin: 12px 0;
             background: white;
-            border-radius: 15px;
+            border-radius: 18px;
             max-width: 80%;
             margin-right: auto;
             border-bottom-left-radius: 4px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
 
-        body.dark-mode .typing-indicator {
+        body.dark .typing-indicator {
             background: #2a3a6a;
         }
 
@@ -218,8 +216,8 @@
 
         .typing-indicator .dots {
             display: flex;
-            gap: 5px;
-            padding: 5px 0;
+            gap: 6px;
+            padding: 4px 0;
         }
 
         .typing-indicator .dots span {
@@ -248,18 +246,19 @@
             }
         }
 
-        /* ===== INPUT AREA ===== */
+        /* INPUT */
         .input-area {
-            padding: 15px 25px;
+            padding: 14px 24px;
             background: white;
             border-top: 1px solid #eee;
             display: flex;
-            gap: 10px;
+            gap: 12px;
             align-items: flex-end;
-            transition: background 0.3s ease;
+            flex-shrink: 0;
+            transition: background 0.3s, border-color 0.3s;
         }
 
-        body.dark-mode .input-area {
+        body.dark .input-area {
             background: #1e2a4a;
             border-top-color: #2a3a6a;
         }
@@ -268,49 +267,45 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 4px;
         }
 
         #input {
             width: 100%;
             padding: 12px 16px;
             border: 2px solid #e0e0e0;
-            border-radius: 12px;
+            border-radius: 14px;
             font-size: 15px;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: inherit;
             resize: none;
-            transition: border-color 0.2s;
             background: #fafafa;
+            transition: border-color 0.2s, background 0.2s;
+            outline: none;
         }
 
         #input:focus {
-            outline: none;
             border-color: #667eea;
             background: white;
         }
 
-        body.dark-mode #input {
+        body.dark #input {
             background: #2a3a6a;
-            color: #e0e0e0;
             border-color: #4a5a8a;
+            color: #e0e0e0;
         }
 
-        body.dark-mode #input:focus {
-            background: #2a3a6a;
+        body.dark #input:focus {
             border-color: #667eea;
-        }
-
-        #input::placeholder {
-            color: #999;
+            background: #2a3a6a;
         }
 
         .input-hint {
             font-size: 11px;
             color: #999;
-            padding-left: 5px;
+            padding-left: 4px;
         }
 
-        body.dark-mode .input-hint {
+        body.dark .input-hint {
             color: #888;
         }
 
@@ -322,13 +317,13 @@
 
         #send {
             padding: 12px 28px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             border: none;
-            border-radius: 12px;
-            cursor: pointer;
+            border-radius: 14px;
             font-size: 15px;
             font-weight: 600;
+            cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
             white-space: nowrap;
             height: 50px;
@@ -353,7 +348,7 @@
         .icon-btn {
             width: 50px;
             height: 50px;
-            border-radius: 12px;
+            border-radius: 14px;
             border: 2px solid #e0e0e0;
             background: #fafafa;
             cursor: pointer;
@@ -369,39 +364,42 @@
             border-color: #667eea;
         }
 
-        body.dark-mode .icon-btn {
+        body.dark .icon-btn {
             background: #2a3a6a;
             border-color: #4a5a8a;
             color: #e0e0e0;
         }
 
-        body.dark-mode .icon-btn:hover {
+        body.dark .icon-btn:hover {
             background: #3a4a7a;
         }
 
-        /* ===== STATUS BAR ===== */
+        /* STATUS */
         .status-bar {
-            padding: 8px 25px;
-            background: #f0f0f0;
+            padding: 8px 24px;
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
             font-size: 12px;
             color: #666;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-top: 1px solid #e0e0e0;
-            transition: background 0.3s ease;
+            flex-shrink: 0;
+            transition: background 0.3s, border-color 0.3s, color 0.3s;
+            flex-wrap: wrap;
+            gap: 5px;
         }
 
-        body.dark-mode .status-bar {
+        body.dark .status-bar {
             background: #1a2a4a;
-            color: #aaa;
             border-top-color: #2a3a6a;
+            color: #aaa;
         }
 
-        .status-bar .status-dot {
+        .status-dot {
             display: inline-block;
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             margin-right: 6px;
         }
@@ -418,17 +416,13 @@
         }
 
         @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.3;
-            }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
         }
 
         .status-right {
             display: flex;
-            gap: 15px;
+            gap: 16px;
             align-items: center;
         }
 
@@ -438,90 +432,81 @@
             gap: 4px;
         }
 
-        /* ===== SCROLLBAR ===== */
+        /* SCROLLBAR */
         #messages::-webkit-scrollbar {
             width: 6px;
         }
-
         #messages::-webkit-scrollbar-track {
             background: transparent;
         }
-
         #messages::-webkit-scrollbar-thumb {
             background: #667eea;
             border-radius: 3px;
         }
 
-        /* ===== RESPONSIVIDADE ===== */
+        /* RESPONSIVIDADE */
         @media (max-width: 600px) {
             #chat {
                 height: 100vh;
                 max-height: none;
                 border-radius: 0;
             }
-
             .header {
-                padding: 15px 18px;
+                padding: 12px 16px;
             }
-
             .header h1 {
-                font-size: 18px;
+                font-size: 16px;
             }
-
             #messages {
-                padding: 15px 18px;
+                padding: 12px 16px;
             }
-
-            .message {
-                max-width: 90%;
+            .msg {
+                max-width: 92%;
                 font-size: 14px;
             }
-
             .input-area {
-                padding: 12px 18px;
+                padding: 10px 16px;
                 flex-wrap: wrap;
             }
-
             #send {
-                padding: 10px 20px;
+                padding: 10px 18px;
                 font-size: 14px;
-                height: 45px;
+                height: 44px;
                 min-width: 60px;
             }
-
             .icon-btn {
-                width: 45px;
-                height: 45px;
+                width: 44px;
+                height: 44px;
                 font-size: 18px;
             }
-
-            .header-controls button {
-                font-size: 11px;
-                padding: 6px 10px;
+            .header-actions button {
+                font-size: 12px;
+                padding: 4px 10px;
             }
-
+            .header-actions select {
+                font-size: 12px;
+                padding: 4px 8px;
+            }
             .status-bar {
                 font-size: 10px;
-                padding: 6px 18px;
-                flex-wrap: wrap;
-                gap: 5px;
+                padding: 6px 16px;
             }
         }
 
-        /* ===== TOAST NOTIFICATION ===== */
+        /* TOAST */
         .toast {
             position: fixed;
             bottom: 30px;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%) translateY(80px);
             background: #333;
             color: white;
             padding: 12px 24px;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 14px;
-            z-index: 1000;
+            z-index: 999;
             opacity: 0;
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            transition: opacity 0.3s, transform 0.3s;
             pointer-events: none;
         }
 
@@ -534,39 +519,44 @@
             background: #4ade80;
             color: #1a1a2e;
         }
-
         .toast.error {
             background: #f87171;
             color: #1a1a2e;
         }
+        .toast.info {
+            background: #60a5fa;
+            color: #1a1a2e;
+        }
     </style>
 </head>
+
 <body>
 
-    <!-- ===== TOAST ===== -->
     <div id="toast" class="toast"></div>
 
-    <!-- ===== CHAT PRINCIPAL ===== -->
     <div id="chat">
+
         <!-- HEADER -->
         <div class="header">
             <h1>
-                <span>🤖</span>
-                Chatbot Groq
+                <span>🧠</span>
+                Chatbot com Memória
             </h1>
-            <div class="header-controls">
-                <button onclick="toggleDarkMode()" title="Modo Escuro">
-                    🌙
-                </button>
-                <button onclick="clearChat()" title="Limpar Conversa">
-                    🗑️
-                </button>
-                <button onclick="exportChat()" title="Exportar Conversa">
-                    📥
-                </button>
-                <button onclick="toggleSound()" title="Som" id="soundBtn">
-                    🔊
-                </button>
+            <div class="header-actions">
+                <select id="personalitySelect">
+                    <option value="default">🤖 Assistente</option>
+                    <option value="professor">👨‍🏫 Professor</option>
+                    <option value="programador">💻 Programador</option>
+                    <option value="chef">🍳 Chef</option>
+                    <option value="financeiro">💰 Financeiro</option>
+                    <option value="fitness">🏋️ Fitness</option>
+                    <option value="coach">🎯 Coach</option>
+                </select>
+                <button onclick="toggleDarkMode()" id="darkBtn" title="Modo escuro">🌙</button>
+                <button onclick="clearChat()" title="Limpar conversa">🗑️</button>
+                <button onclick="exportChat()" title="Exportar conversa">📥</button>
+                <button onclick="toggleSound()" id="soundBtn" title="Som">🔊</button>
+                <button onclick="clearMemory()" title="Limpar memória" style="background:rgba(255,50,50,0.3);">🧹</button>
             </div>
         </div>
 
@@ -586,21 +576,15 @@
         <div class="input-area">
             <div class="input-wrapper">
                 <textarea id="input" rows="1" placeholder="Digite sua pergunta em português... (Enter para enviar)"></textarea>
-                <div class="input-hint">
-                    🔒 100% gratuito • ⚡ Rápido • 🇧🇷 Português
-                </div>
+                <div class="input-hint">🧠 O bot lembra de conversas anteriores! • 🇧🇷 Português</div>
             </div>
             <div class="input-actions">
-                <button class="icon-btn" onclick="attachFile()" title="Anexar arquivo">
-                    📎
-                </button>
-                <button id="send">
-                    Enviar →
-                </button>
+                <button class="icon-btn" onclick="attachFile()" title="Anexar arquivo">📎</button>
+                <button id="send">Enviar</button>
             </div>
         </div>
 
-        <!-- STATUS BAR -->
+        <!-- STATUS -->
         <div class="status-bar">
             <div>
                 <span class="status-dot online" id="statusDot"></span>
@@ -608,83 +592,106 @@
             </div>
             <div class="status-right">
                 <span>💬 <span id="msgCount">0</span></span>
-                <span>📊 <span id="tokenCount">0</span> tokens</span>
+                <span>🧠 <span id="memoryCount">0</span> msgs</span>
                 <span>🤖 <span id="modelName">Groq</span></span>
+                <span>🎭 <span id="currentPersonality">Assistente</span></span>
             </div>
         </div>
     </div>
 
-    <!-- ===== JAVASCRIPT ===== -->
     <script>
-        // ===== CONFIGURAÇÕES =====
+        // ============================================================
+        // CONFIGURAÇÕES
+        // ============================================================
         const API_URL = 'http://localhost:5000/api/chat';
+        const SESSION_ID = 'user_' + Date.now(); // ID único para esta sessão
         let isWaiting = false;
         let messageCount = 0;
-        let tokenCount = 0;
+        let memoryCount = 0;
         let soundEnabled = true;
+        let darkMode = false;
 
-        // ===== ELEMENTOS DOM =====
+        // ============================================================
+        // DOM ELEMENTOS
+        // ============================================================
         const messagesDiv = document.getElementById('messages');
         const input = document.getElementById('input');
         const sendBtn = document.getElementById('send');
-        const typingIndicator = document.getElementById('typingIndicator');
+        const typingDiv = document.getElementById('typingIndicator');
         const statusDot = document.getElementById('statusDot');
         const statusText = document.getElementById('statusText');
-        const msgCount = document.getElementById('msgCount');
-        const tokenCountEl = document.getElementById('tokenCount');
+        const msgCountEl = document.getElementById('msgCount');
+        const memoryCountEl = document.getElementById('memoryCount');
         const modelNameEl = document.getElementById('modelName');
+        const currentPersonalityEl = document.getElementById('currentPersonality');
+        const personalitySelect = document.getElementById('personalitySelect');
         const toast = document.getElementById('toast');
 
-        // ===== FUNÇÕES =====
+        const personalityNames = {
+            'default': 'Assistente',
+            'professor': 'Professor',
+            'programador': 'Programador',
+            'chef': 'Chef',
+            'financeiro': 'Financeiro',
+            'fitness': 'Fitness',
+            'coach': 'Coach'
+        };
 
-        // Adicionar mensagem
-        function addMessage(role, content) {
-            const div = document.createElement('div');
-            div.className = 'message ' + role;
+        // ============================================================
+        // FUNÇÕES
+        // ============================================================
 
-            const roleSpan = document.createElement('span');
-            roleSpan.className = 'role';
-            roleSpan.textContent = role === 'user' ? '👤 Você' : '🤖 Assistente';
-            div.appendChild(roleSpan);
+        function addMessage(role, content, memoryCount = null) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'msg ' + role;
+
+            const label = document.createElement('span');
+            label.className = 'label';
+            label.textContent = role === 'user' ? '👤 Você' : '🤖 Assistente';
+            wrapper.appendChild(label);
 
             const textNode = document.createTextNode(content);
-            div.appendChild(textNode);
+            wrapper.appendChild(textNode);
 
-            const timeSpan = document.createElement('span');
-            timeSpan.className = 'time';
-            timeSpan.textContent = new Date().toLocaleTimeString();
-            div.appendChild(timeSpan);
+            if (role === 'bot' && memoryCount !== null) {
+                const badge = document.createElement('span');
+                badge.className = 'memory-badge';
+                badge.textContent = '🧠 ' + memoryCount + ' mensagens na memória';
+                wrapper.appendChild(badge);
+            }
 
-            messagesDiv.appendChild(div);
+            const time = document.createElement('span');
+            time.className = 'time';
+            time.textContent = new Date().toLocaleTimeString();
+            wrapper.appendChild(time);
+
+            messagesDiv.appendChild(wrapper);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
             if (role === 'user') {
                 messageCount++;
-                msgCount.textContent = messageCount;
+                msgCountEl.textContent = messageCount;
             }
 
-            // Se for resposta do bot e som estiver ativo
             if (role === 'bot' && soundEnabled) {
                 speakText(content);
             }
         }
 
-        // Mostrar/Esconder digitação
         function showTyping() {
-            typingIndicator.classList.add('active');
+            typingDiv.classList.add('active');
             statusDot.className = 'status-dot thinking';
             statusText.textContent = 'Pensando...';
             sendBtn.disabled = true;
         }
 
         function hideTyping() {
-            typingIndicator.classList.remove('active');
+            typingDiv.classList.remove('active');
             statusDot.className = 'status-dot online';
             statusText.textContent = 'Online';
             sendBtn.disabled = false;
         }
 
-        // Enviar mensagem
         async function sendMessage() {
             const text = input.value.trim();
             if (!text || isWaiting) return;
@@ -696,12 +703,17 @@
             isWaiting = true;
             showTyping();
 
+            const personality = personalitySelect.value;
+            const personalityName = personalityNames[personality] || personality;
+
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        messages: [{ role: 'user', content: text }]
+                        messages: [{ role: 'user', content: text }],
+                        personality: personality,
+                        session_id: SESSION_ID
                     })
                 });
 
@@ -709,31 +721,38 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    addMessage('bot', data.content);
+                    // Atualiza o contador de memória
+                    if (data.history_count) {
+                        memoryCount = data.history_count;
+                        memoryCountEl.textContent = memoryCount;
+                    }
+
+                    addMessage('bot', data.content, data.history_count);
+
                     if (data.model) {
                         modelNameEl.textContent = data.model.split('/').pop() || 'Groq';
                     }
-                    // Atualizar tokens se disponível
-                    if (data.usage) {
-                        tokenCount += data.usage.total_tokens || 0;
-                        tokenCountEl.textContent = tokenCount;
-                    }
+                    currentPersonalityEl.textContent = personalityName;
                 } else {
                     addMessage('bot', '❌ Erro: ' + (data.error || 'Erro desconhecido'));
                     showToast('Erro ao processar', 'error');
                 }
             } catch (error) {
                 hideTyping();
-                addMessage('bot', '❌ Erro de conexão: ' + error.message + '\nVerifique se o servidor está rodando.');
-                showToast('Servidor offline!', 'error');
+                addMessage('bot', '❌ Erro de conexão!\nVerifique se o servidor está rodando.');
                 statusDot.className = 'status-dot offline';
                 statusText.textContent = 'Offline';
+                showToast('Servidor offline!', 'error');
             }
+
             isWaiting = false;
             input.focus();
         }
 
-        // ===== SÍNTESE DE VOZ =====
+        // ============================================================
+        // FUNCIONALIDADES EXTRAS
+        // ============================================================
+
         function speakText(text) {
             if (!window.speechSynthesis) return;
             const utterance = new SpeechSynthesisUtterance(text);
@@ -748,118 +767,136 @@
             soundEnabled = !soundEnabled;
             const btn = document.getElementById('soundBtn');
             btn.textContent = soundEnabled ? '🔊' : '🔇';
-            showToast(soundEnabled ? 'Som ativado' : 'Som desativado', 'success');
+            showToast(soundEnabled ? 'Som ativado' : 'Som desativado', 'info');
         }
 
-        // ===== MODO ESCURO =====
         function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-            const btn = document.querySelector('.header-controls button:first-child');
-            btn.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
-            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+            darkMode = !darkMode;
+            document.body.classList.toggle('dark', darkMode);
+            const btn = document.getElementById('darkBtn');
+            btn.textContent = darkMode ? '☀️' : '🌙';
+            localStorage.setItem('darkMode', darkMode);
         }
 
-        // Carregar preferência de modo escuro
         if (localStorage.getItem('darkMode') === 'true') {
             toggleDarkMode();
         }
 
-        // ===== LIMPAR CHAT =====
         function clearChat() {
-            if (confirm('Tem certeza que deseja limpar a conversa?')) {
+            if (confirm('Tem certeza que deseja limpar o chat (apenas visual)?')) {
                 messagesDiv.innerHTML = '';
                 messageCount = 0;
-                msgCount.textContent = '0';
-                showToast('Conversa limpa!', 'success');
-                // Adicionar mensagem de boas-vindas
-                addMessage('bot', 'Olá! Conversa limpa. Pergunte o que quiser! 🇧🇷');
+                msgCountEl.textContent = '0';
+                addMessage('bot', '🧹 Chat limpo! Mas a memória do bot continua intacta.');
+                showToast('Chat limpo!', 'success');
             }
         }
 
-        // ===== EXPORTAR CHAT =====
+        async function clearMemory() {
+            if (confirm('Tem certeza que deseja APAGAR TODA A MEMÓRIA do bot?\nIsso fará ele esquecer tudo!')){
+                try {
+                    const response = await fetch(`http://localhost:5000/api/clear_memory/${SESSION_ID}`, {
+                        method: 'DELETE'
+                    });
+                    if (response.ok) {
+                        memoryCount = 0;
+                        memoryCountEl.textContent = '0';
+                        showToast('🧠 Memória apagada! O bot esqueceu tudo.', 'success');
+                        addMessage('bot', '🧠 Minha memória foi apagada! Começamos do zero.');
+                    }
+                } catch (error) {
+                    showToast('Erro ao apagar memória', 'error');
+                }
+            }
+        }
+
         function exportChat() {
-            const messages = messagesDiv.querySelectorAll('.message');
-            if (messages.length === 0) {
+            const msgs = messagesDiv.querySelectorAll('.msg');
+            if (msgs.length === 0) {
                 showToast('Nenhuma mensagem para exportar', 'error');
                 return;
             }
 
-            let text = '🤖 CHATBOT GROQ - CONVERSA\n';
-            text += '=' .repeat(50) + '\n';
-            text += 'Data: ' + new Date().toLocaleString() + '\n\n';
+            let text = '🧠 CHATBOT COM MEMÓRIA - CONVERSA\n';
+            text += '='.repeat(50) + '\n';
+            text += 'Data: ' + new Date().toLocaleString() + '\n';
+            text += 'Sessão: ' + SESSION_ID + '\n';
+            text += 'Personalidade: ' + personalityNames[personalitySelect.value] + '\n\n';
 
-            messages.forEach(msg => {
-                const role = msg.querySelector('.role').textContent;
-                const content = msg.textContent.replace(role, '').replace(/\d{2}:\d{2}:\d{2}/g, '').trim();
+            msgs.forEach(msg => {
+                const role = msg.querySelector('.label').textContent;
+                const content = msg.textContent
+                    .replace(role, '')
+                    .replace(/\d{2}:\d{2}:\d{2}/g, '')
+                    .replace(/🧠 \d+ mensagens na memória/g, '')
+                    .trim();
                 text += role + '\n' + content + '\n\n';
             });
 
-            // Baixar arquivo
             const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = 'chat_' + new Date().toISOString().slice(0, 10) + '.txt';
             link.click();
             URL.revokeObjectURL(link.href);
-
-            showToast('Conversa exportada com sucesso!', 'success');
+            showToast('Conversa exportada!', 'success');
         }
 
-        // ===== ANEXAR ARQUIVO =====
         function attachFile() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.txt,.pdf,.docx,.md';
-            input.onchange = function(e) {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.txt,.md,.csv,.json';
+            fileInput.onchange = function(e) {
                 const file = e.target.files[0];
                 if (!file) return;
-
                 const reader = new FileReader();
-                reader.onload = function(event) {
-                    const content = event.target.result;
-                    // Envia o conteúdo do arquivo como mensagem
-                    const fileContent = 📄 Conteúdo do arquivo "":\n\n;
-                    input.value = fileContent;
+                reader.onload = function(ev) {
+                    const content = ev.target.result;
+                    input.value = '📄 Conteúdo de "' + file.name + '":\n\n' + content;
                     sendMessage();
                 };
                 reader.readAsText(file);
-                showToast(Arquivo "" anexado!, 'success');
+                showToast('Arquivo anexado!', 'success');
             };
-            input.click();
+            fileInput.click();
         }
 
-        // ===== TOAST =====
-        function showToast(message, type = 'success') {
+        function showToast(message, type = 'info') {
             toast.textContent = message;
             toast.className = 'toast ' + type;
             toast.classList.add('show');
-
             clearTimeout(toast._timeout);
             toast._timeout = setTimeout(() => {
                 toast.classList.remove('show');
             }, 3000);
         }
 
-        // ===== EVENTOS =====
+        // ============================================================
+        // EVENTOS
+        // ============================================================
         sendBtn.addEventListener('click', sendMessage);
 
-        input.addEventListener('keydown', (e) => {
+        input.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 sendMessage();
             }
         });
 
-        // Auto-resize do textarea
         input.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = Math.min(this.scrollHeight, 120) + 'px';
         });
 
-        // ===== MENSAGEM DE BOAS-VINDAS =====
-        addMessage('bot', 'Olá! Sou seu assistente em português usando Groq. 🇧🇷\n\n⚡ Rápido • 🆓 Grátis • 🤖 Inteligente\n\nPergunte o que quiser!');
+        personalitySelect.addEventListener('change', function() {
+            const name = personalityNames[this.value] || this.value;
+            currentPersonalityEl.textContent = name;
+            showToast(`🎭 Personalidade alterada para: ${name}`, 'info');
+        });
 
-        // ===== CHECK HEALTH =====
+        // ============================================================
+        // CHECK HEALTH
+        // ============================================================
         async function checkHealth() {
             try {
                 const response = await fetch('http://localhost:5000/api/health');
@@ -876,11 +913,22 @@
             }
         }
 
-        // Verificar a cada 30 segundos
-        setInterval(checkHealth, 30000);
+        // ============================================================
+        // INICIALIZAÇÃO
+        // ============================================================
+        addMessage('bot', '🧠 Olá! Agora tenho MEMÓRIA!\n\n' +
+            '🇧🇷 Falo português e lembro de conversas anteriores.\n' +
+            '🎭 Escolha uma personalidade no menu acima.\n' +
+            '💡 Pergunte algo e depois pergunte "O que eu falei antes?"\n\n' +
+            'Vamos conversar!');
+
+        currentPersonalityEl.textContent = personalityNames[personalitySelect.value] || 'Assistente';
+
+        setInterval(checkHealth, 15000);
         checkHealth();
 
-        console.log('🤖 Chatbot Groq pronto!');
+        console.log('🧠 Chatbot com Memória - Sessão:', SESSION_ID);
+        console.log('🤖 Frontend pronto!');
     </script>
 </body>
 </html>
