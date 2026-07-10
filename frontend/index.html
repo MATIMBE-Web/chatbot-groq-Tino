@@ -567,6 +567,9 @@
                 <button onclick="toggleSound()" title="Som" id="soundBtn">
                     🔊
                 </button>
+		<button onclick="toggleSearch()" id="searchBtn" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:14px;">
+    🔍 Pesquisar
+</button>
             </div>
         </div>
 
@@ -616,6 +619,22 @@
 
     <!-- ===== JAVASCRIPT ===== -->
     <script>
+let searchEnabled = false;
+
+function toggleSearch() {
+    searchEnabled = !searchEnabled;
+    const btn = document.getElementById('searchBtn');
+    btn.textContent = searchEnabled ? '🔍 Ativado' : '🔍 Pesquisar';
+    btn.style.background = searchEnabled ? 'rgba(76, 175, 80, 0.5)' : 'rgba(255,255,255,0.2)';
+    showToast(searchEnabled ? 'Pesquisa na web ativada!' : 'Pesquisa na web desativada', 'info');
+}
+
+// No sendMessage, enviar o estado da pesquisa
+body: JSON.stringify({
+    messages: [{ role: 'user', content: text }],
+    personality: personality,
+    search: searchEnabled  // <-- Envia para o backend
+})
         // ===== CONFIGURAÇÕES =====
         const API_URL = 'http://localhost:5000/api/chat';
         let isWaiting = false;
@@ -879,6 +898,13 @@
         // Verificar a cada 30 segundos
         setInterval(checkHealth, 30000);
         checkHealth();
+<link rel="manifest" href="/manifest.json">
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js')
+            .then(() => console.log('Service Worker registrado'));
+    }
+</script>
 
         console.log('🤖 Chatbot Groq pronto!');
     </script>
