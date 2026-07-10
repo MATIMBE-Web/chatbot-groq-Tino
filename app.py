@@ -5,6 +5,16 @@ import os
 import json
 
 app = Flask(__name__)
+from flask import send_from_directory
+import os
+
+@app.route('/')
+def serve_frontend():
+    return send_from_directory('frontend', 'index.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    return send_from_directory('frontend', path)
 CORS(app)
 
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', 'SUA_CHAVE_GROQ_AQUI')
