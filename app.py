@@ -66,7 +66,10 @@ def chat():
                         'model': f'groq/{model}',
                         'personality': personality_key
                     }), 200
+                else:
+                    print(f"Erro no modelo {model}: {response.status_code}")
             except Exception as e:
+                print(f"Erro com {model}: {str(e)}")
                 continue
 
         return jsonify({'error': 'Nenhum modelo disponível'}), 503
