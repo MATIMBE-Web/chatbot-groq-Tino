@@ -48,111 +48,42 @@ AVAILABLE_MODELS = [
 ]
 
 # ============================================================
-# FUNÇÃO DE PESQUISA - CORRIGIDA
+# FUNÇÃO DE PESQUISA - GOOGLE
 # ============================================================
 
+# Coloque aqui suas chaves
+GOOGLE_API_KEY = os.environ.get('AQ.Ab8RN6I-GgYuh9kQ1Fj-ORob_rpBksMagRIwJ4VN9IdZ6rN8Rg')
+GOOGLE_CSE_ID = os.environ.get('AQ.Ab8RN6I-GgYuh9kQ1Fj-ORob_rpBksMagRIwJ4VN9IdZ6rN8Rg')
+
 def search_web(query):
-    """Pesquisa na web usando a API do DuckDuckGo"""
+    """Pesquisa na web usando Google Custom Search API (gratuita)"""
     try:
         print(f"🔍 A pesquisar: {query}")
         
-        # Usar a API do DuckDuckGo
-        url = f"https://api.duckduckgo.com/?q={quote_plus(query)}&format=json&pretty=1"
+        # Usar a API do Google
+        url = f"https://www.googleapis.com/customsearch/v1?key={GOOGLE_API_KEY}&cx={GOOGLE_CSE_ID}&q={quote_plus(query)}&num=5"
         response = requests.get(url, timeout=15)
         
         if response.status_code == 200:
             data = response.json()
             results = []
             
-            # Resultado principal
-            if data.get('Abstract'):
+            for item in data.get('items', []):
                 results.append({
-                    'title': data.get('Heading', 'Resultado'),
-                    'snippet': data.get('Abstract', ''),
-                    'link': data.get('AbstractURL', '#')
+                    'title': item.get('title', 'Sem título'),
+                    'snippet': item.get('snippet', 'Sem descrição'),
+                    'link': item.get('link', '#')
                 })
-            
-            # Resultados relacionados
-            for item in data.get('RelatedTopics', [])[:5]:
-                if 'Text' in item:
-                    text = item['Text']
-                    link = item.get('FirstURL', '#')
-                    # Separar título do texto
-                    parts = text.split(' - ', 1)
-                    title = parts[0] if len(parts) > 0 else text[:50]
-                    snippet = parts[1] if len(parts) > 1 else text
-                    results.append({
-                        'title': title[:100],
-                        'snippet': snippet[:300],
-                        'link': link
-                    })
             
             print(f"✅ Encontrados {len(results)} resultados")
             return results
         else:
-            print(f"❌ Erro na pesquisa: {response.status_code}")
+            print(f"❌ Erro na pesquisa: {response.status_code} - {response.text[:100]}")
             return []
+            
     except Exception as e:
         print(f"❌ Erro na pesquisa: {str(e)}")
         return []
-
-def format_search_results(results):
-    """Formata os resultados para o prompt"""
-    if not results:
-        return "Nenhum resultado encontrado."
-    
-    formatted = "RESULTADOS DA PESQUISA:\n\n"
-    for i, r in enumerate(results, 1):
-        formatted += f"{i}. {r['title']}\n"
-        formatted += f"   {r['snippet']}\n"
-        if r['link'] and r['link'] != '#':
-            formatted += f"   Fonte: {r['link']}\n"
-        formatted += "\n"
-    return formatted
-
-# ============================================================
-# ROTA PRINCIPAL - CORRIGIDA
-# ============================================================
-
-@app.route('/api/chat', methods=['POST'])
-def chat():
-    try:
-        data = request.json
-        messages = data.get('messages', [])
-        personality_key = data.get('personality', 'default')
-        search_enabled = data.get('search', False)
-        
-        if not messages:
-            return jsonify({'error': 'Nenhuma mensagem'}), 400
-
-        user_message = messages[-1]['content'] if messages else ""
-        system_prompt = PERSONALITIES.get(personality_key, PERSONALITIES["default"])
-
-        print("=" * 60)
-        print(f"📥 Mensagem: {user_message}")
-        print(f"🔍 Pesquisa ativada: {search_enabled}")
-
-        # ===== SEMPRE PESQUISAR SE ESTIVER ATIVADO =====
-        search_results_text = ""
-        results = []
-        
-        if search_enabled:
-            print("🔍 A pesquisar na web...")
-            results = search_web(user_message)
-            if results:
-                search_results_text = format_search_results(results)
-                print(f"✅ {len(results)} resultados encontrados")
-            else:
-                search_results_text = "Não foi possível obter resultados da pesquisa. Responda com o seu conhecimento geral."
-                print("❌ Nenhum resultado encontrado")
-        else:
-            print("ℹ️ Pesquisa desativada")
-            search_results_text = ""
-
-        # ===== CONSTRUIR PROMPT =====
-        if search_results_text:
-            prompt = f"""{system_prompt}
-
 ATENÇÃO: O USUÁRIO ATIVOU O MODO DE PESQUISA NA WEB.
 Use as informações abaixo para responder.
 
