@@ -12,7 +12,9 @@ CORS(app)
 # ============================================================
 # CHAVES API
 # ============================================================
-GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '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')
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', 'SUA_CHAVE_GROQ_AQUI')
+GROQ_API_KEY = GROQ_API_KEY.strip()
+
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 HEADERS = {
@@ -33,7 +35,9 @@ PERSONALITIES = {
     "coach": "Você é um coach. Responda em português."
 }
 
-# Modelos disponíveis na Groq (atualizados 2026)
+# ============================================================
+# SEUS MODELOS (exatamente como você usa!)
+# ============================================================
 AVAILABLE_MODELS = [
     "llama-3.3-70b-versatile",      # Melhor qualidade
     "llama-3.1-70b-versatile",      # Alta qualidade
@@ -148,8 +152,8 @@ Pergunta do usuário: {user_message}
 
 Resposta:"""
 
-        # Chamar a API
-        for model in MODELS:
+        # Chamar a API com SEUS modelos
+        for model in AVAILABLE_MODELS:
             try:
                 payload = {
                     "model": model,
@@ -171,6 +175,8 @@ Resposta:"""
                         'search_used': should_search,
                         'search_results': results if should_search else []
                     }), 200
+                else:
+                    print(f"Erro no modelo {model}: {response.status_code} - {response.text[:100]}")
             except Exception as e:
                 print(f"Erro com {model}: {str(e)}")
                 continue
@@ -188,7 +194,7 @@ def health():
     return jsonify({
         'status': 'ok',
         'message': 'Servidor Groq - Português',
-        'models': MODELS,
+        'models': AVAILABLE_MODELS,
         'search_available': True
     }), 200
 
@@ -225,6 +231,6 @@ if __name__ == '__main__':
     print("=" * 60)
     print("🔍 CHATBOT COM PESQUISA NA WEB")
     print("🚀 Rodando em http://localhost:5000")
-    print("📋 Modelos disponíveis:", MODELS)
+    print("📋 Modelos disponíveis:", AVAILABLE_MODELS)
     print("=" * 60)
     app.run(debug=True, host='0.0.0.0', port=10000)
