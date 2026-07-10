@@ -12,7 +12,8 @@ CORS(app)
 # ============================================================
 # CHAVES API
 # ============================================================
-GROQ_API_KEY = os.environ.get('GROQ_API_KEY', 'SUA_CHAVE_GROQ_AQUI')
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '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
+')
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 HEADERS = {
@@ -33,11 +34,13 @@ PERSONALITIES = {
     "coach": "Você é um coach. Responda em português."
 }
 
-MODELS = [
-    "llama-3.3-70b-versatile",
-    "llama-3.1-70b-versatile",
-    "llama-3.1-8b-instant",
-    "gemma2-9b-it"
+# Modelos disponíveis na Groq (atualizados 2026)
+AVAILABLE_MODELS = [
+    "llama-3.3-70b-versatile",      # Melhor qualidade
+    "llama-3.1-70b-versatile",      # Alta qualidade
+    "llama-3.1-8b-instant",         # Rápido e bom
+    "gemma2-9b-it",                 # Google Gemma 2
+    "deepseek-r1-distill-llama-70b" # DeepSeek
 ]
 
 # ============================================================
