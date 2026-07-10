@@ -6,7 +6,7 @@ app = Flask(__name__)
 CORS(app)
 
 # SUA CHAVE API DO GROQ (pegue em https://console.groq.com/keys)
-GROQ_API_KEY = "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"
+GROQ_API_KEY = "SUA_CHAVE_GOOGLE_AQUI"
 
 client = Groq(api_key=GROQ_API_KEY)
 

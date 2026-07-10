@@ -8,7 +8,7 @@ app = Flask(__name__)
 CORS(app)
 
 # ⚠️ METTEZ VOTRE CLÉ API ICI
-OPENROUTER_API_KEY = "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"
+OPENROUTER_API_KEY = "SUA_CHAVE_GOOGLE_AQUI"
 
 # Lista de modelos gratuitos CONFIRMADOS que funcionam
 FREE_MODELS = [
