@@ -3,15 +3,13 @@ from flask_cors import CORS
 import requests
 import os
 import json
-import re
 from urllib.parse import quote_plus
-import time
 
 app = Flask(__name__)
 CORS(app)
 
 # ============================================================
-# CHAVES API
+# CHAVE API
 # ============================================================
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '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')
 GROQ_API_KEY = GROQ_API_KEY.strip()
@@ -27,13 +25,13 @@ HEADERS = {
 # PERSONALIDADES
 # ============================================================
 PERSONALITIES = {
-    "default": "Você é um assistente útil. Responda em português.",
-    "professor": "Você é um professor. Ensine de forma didática. Responda em português.",
-    "programador": "Você é um programador. Escreva código explicado. Responda em português.",
-    "chef": "Você é um chef. Dê receitas e dicas. Responda em português.",
-    "financeiro": "Você é um consultor financeiro. Responda em português.",
-    "fitness": "Você é um personal trainer. Responda em português.",
-    "coach": "Você é um coach. Responda em português."
+    "default": "Voce e um assistente util. Responda em portugues.",
+    "professor": "Voce e um professor. Ensine de forma didatica. Responda em portugues.",
+    "programador": "Voce e um programador. Escreva codigo explicado. Responda em portugues.",
+    "chef": "Voce e um chef. De receitas e dicas. Responda em portugues.",
+    "financeiro": "Voce e um consultor financeiro. Responda em portugues.",
+    "fitness": "Voce e um personal trainer. Responda em portugues.",
+    "coach": "Voce e um coach. Responda em portugues."
 }
 
 # ============================================================
@@ -48,132 +46,118 @@ AVAILABLE_MODELS = [
 ]
 
 # ============================================================
-# FUNÇÃO DE PESQUISA - GOOGLE
+# PESQUISA NA WEB
 # ============================================================
-
-# Coloque aqui suas chaves
-GOOGLE_API_KEY = os.environ.get('AQ.Ab8RN6I-GgYuh9kQ1Fj-ORob_rpBksMagRIwJ4VN9IdZ6rN8Rg')
-GOOGLE_CSE_ID = os.environ.get('AQ.Ab8RN6I-GgYuh9kQ1Fj-ORob_rpBksMagRIwJ4VN9IdZ6rN8Rg')
-
 def search_web(query):
-    """Pesquisa na web usando Google Custom Search API (gratuita)"""
     try:
-        print(f"🔍 A pesquisar: {query}")
-        
-        # Usar a API do Google
-        url = f"https://www.googleapis.com/customsearch/v1?key={GOOGLE_API_KEY}&cx={GOOGLE_CSE_ID}&q={quote_plus(query)}&num=5"
-        response = requests.get(url, timeout=15)
-        
+        url = f"https://api.duckduckgo.com/?q={quote_plus(query)}&format=json&pretty=1"
+        response = requests.get(url, timeout=10)
         if response.status_code == 200:
             data = response.json()
             results = []
-            
-            for item in data.get('items', []):
+            if data.get('Abstract'):
                 results.append({
-                    'title': item.get('title', 'Sem título'),
-                    'snippet': item.get('snippet', 'Sem descrição'),
-                    'link': item.get('link', '#')
+                    'title': data.get('Heading', 'Resultado'),
+                    'snippet': data.get('Abstract', ''),
+                    'link': data.get('AbstractURL', '#')
                 })
-            
-            print(f"✅ Encontrados {len(results)} resultados")
-            return results
-        else:
-            print(f"❌ Erro na pesquisa: {response.status_code} - {response.text[:100]}")
-            return []
-            
-    except Exception as e:
-        print(f"❌ Erro na pesquisa: {str(e)}")
+            for item in data.get('RelatedTopics', [])[:5]:
+                if 'Text' in item:
+                    text = item['Text']
+                    link = item.get('FirstURL', '#')
+                    parts = text.split(' - ', 1)
+                    title = parts[0] if len(parts) > 0 else text[:50]
+                    snippet = parts[1] if len(parts) > 1 else text
+                    results.append({
+                        'title': title[:100],
+                        'snippet': snippet[:300],
+                        'link': link
+                    })
+            return results[:5]
         return []
-ATENÇÃO: O USUÁRIO ATIVOU O MODO DE PESQUISA NA WEB.
-Use as informações abaixo para responder.
+    except Exception as e:
+        print(f"Erro na pesquisa: {str(e)}")
+        return []
 
-{search_results_text}
+def format_search_results(results):
+    if not results:
+        return "Nenhum resultado encontrado."
+    formatted = "Resultados da pesquisa:\n\n"
+    for i, r in enumerate(results, 1):
+        formatted += f"{i}. {r['title']}\n"
+        formatted += f"   {r['snippet']}\n"
+        if r['link'] and r['link'] != '#':
+            formatted += f"   Link: {r['link']}\n"
+        formatted += "\n"
+    return formatted
 
-Com base nas informações ACIMA, responda à pergunta do usuário de forma completa, citando as fontes.
-Se a informação não estiver nos resultados, diga que não encontrou e use seu conhecimento geral.
+# ============================================================
+# ROTA PRINCIPAL
+# ============================================================
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    try:
+        data = request.json
+        messages = data.get('messages', [])
+        personality_key = data.get('personality', 'default')
+        search_enabled = data.get('search', False)
 
-Pergunta do usuário: {user_message}
+        if not messages:
+            return jsonify({'error': 'Nenhuma mensagem'}), 400
 
-Resposta (em português, com base na pesquisa):"""
+        user_message = messages[-1]['content'] if messages else ""
+        system_prompt = PERSONALITIES.get(personality_key, PERSONALITIES["default"])
+
+        search_results_text = ""
+        results = []
+
+        if search_enabled:
+            results = search_web(user_message)
+            if results:
+                search_results_text = format_search_results(results)
+
+        if search_results_text:
+            prompt = system_prompt + "\n\nInformacoes da pesquisa:\n" + search_results_text + "\nPergunta: " + user_message + "\nResposta:"
         else:
-            prompt = f"""{system_prompt}
+            prompt = system_prompt + "\n\nPergunta: " + user_message + "\nResposta:"
 
-Pergunta do usuário: {user_message}
-
-Resposta (em português):"""
-
-        print(f"📤 Prompt enviado (primeiros 200 caracteres): {prompt[:200]}...")
-
-        # ===== CHAMAR A API =====
         for model in AVAILABLE_MODELS:
             try:
-                print(f"🔄 A tentar modelo: {model}")
-                
                 payload = {
                     "model": model,
-                    "messages": [
-                        {"role": "user", "content": prompt}
-                    ],
+                    "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.7,
                     "max_tokens": 800
                 }
-
                 response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=60)
-
                 if response.status_code == 200:
                     result = response.json()
-                    resposta = result['choices'][0]['message']['content']
-                    print(f"✅ Sucesso com {model}")
-                    
                     return jsonify({
-                        'content': resposta,
+                        'content': result['choices'][0]['message']['content'],
                         'model': f'groq/{model}',
                         'personality': personality_key,
                         'search_used': search_enabled,
                         'search_results': results if search_enabled else []
                     }), 200
-                else:
-                    print(f"❌ Erro no modelo {model}: {response.status_code}")
-                    
             except Exception as e:
-                print(f"❌ Exceção com {model}: {str(e)}")
+                print(f"Erro com {model}: {str(e)}")
                 continue
 
-        return jsonify({'error': 'Nenhum modelo disponível'}), 503
-        
+        return jsonify({'error': 'Nenhum modelo disponivel'}), 503
     except Exception as e:
-        print(f"❌ ERRO GERAL: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 # ============================================================
 # ROTAS ADICIONAIS
 # ============================================================
-
 @app.route('/api/health', methods=['GET'])
 def health():
     return jsonify({
         'status': 'ok',
-        'message': 'Servidor Groq - Português',
+        'message': 'Servidor Groq - Portugues',
         'models': AVAILABLE_MODELS,
         'search_available': True
     }), 200
-
-@app.route('/api/search', methods=['POST'])
-def search_only():
-    try:
-        data = request.json
-        query = data.get('query', '')
-        if not query:
-            return jsonify({'error': 'Consulta vazia'}), 400
-        
-        results = search_web(query)
-        return jsonify({
-            'query': query,
-            'results': results,
-            'count': len(results)
-        }), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 @app.route('/')
 def serve_frontend():
@@ -184,13 +168,12 @@ def serve_static(path):
     return send_from_directory('frontend', path)
 
 # ============================================================
-# INICIALIZAÇÃO
+# INICIALIZACAO
 # ============================================================
-
 if __name__ == '__main__':
     print("=" * 60)
-    print("🔍 CHATBOT COM PESQUISA NA WEB")
-    print("🚀 Rodando em http://localhost:5000")
-    print("📋 Modelos disponíveis:", AVAILABLE_MODELS)
+    print("CHATBOT COM PESQUISA NA WEB")
+    print("Rodando em http://localhost:5000")
+    print("Modelos:", AVAILABLE_MODELS)
     print("=" * 60)
     app.run(debug=True, host='0.0.0.0', port=10000)
