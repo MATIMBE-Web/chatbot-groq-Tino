@@ -1,25 +1,20 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from groq import Groq
+import requests
 import os
+import json
 
 app = Flask(__name__)
 CORS(app)
 
-# Chave API do Groq
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', 'SUA_CHAVE_GROQ_AQUI')
-client = Groq(api_key=GROQ_API_KEY)
+API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-# Modelos
-AVAILABLE_MODELS = [
-    "llama-3.3-70b-versatile",
-    "llama-3.1-70b-versatile",
-    "llama-3.1-8b-instant",
-    "gemma2-9b-it",
-    "deepseek-r1-distill-llama-70b"
-]
+HEADERS = {
+    "Authorization": f"Bearer {GROQ_API_KEY}",
+    "Content-Type": "application/json"
+}
 
-# Personalidades
 PERSONALITIES = {
     "default": "Você é um assistente útil. Responda em português.",
     "professor": "Você é um professor. Ensine de forma didática. Responda em português.",
@@ -29,6 +24,13 @@ PERSONALITIES = {
     "fitness": "Você é um personal trainer. Responda em português.",
     "coach": "Você é um coach. Responda em português."
 }
+
+MODELS = [
+    "llama-3.3-70b-versatile",
+    "llama-3.1-70b-versatile",
+    "llama-3.1-8b-instant",
+    "gemma2-9b-it"
+]
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
@@ -43,23 +45,27 @@ def chat():
         user_message = messages[-1]['content'] if messages else ""
         system_prompt = PERSONALITIES.get(personality_key, PERSONALITIES["default"])
 
-        for model in AVAILABLE_MODELS:
+        for model in MODELS:
             try:
-                completion = client.chat.completions.create(
-                    model=model,
-                    messages=[
+                payload = {
+                    "model": model,
+                    "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_message}
                     ],
-                    temperature=0.7,
-                    max_tokens=500
-                )
+                    "temperature": 0.7,
+                    "max_tokens": 500
+                }
                 
-                return jsonify({
-                    'content': completion.choices[0].message.content,
-                    'model': f'groq/{model}',
-                    'personality': personality_key
-                }), 200
+                response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=30)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    return jsonify({
+                        'content': result['choices'][0]['message']['content'],
+                        'model': f'groq/{model}',
+                        'personality': personality_key
+                    }), 200
             except Exception as e:
                 continue
 
@@ -72,7 +78,7 @@ def health():
     return jsonify({
         'status': 'ok',
         'message': 'Servidor Groq - Português',
-        'models': AVAILABLE_MODELS
+        'models': MODELS
     }), 200
 
 if __name__ == '__main__':
