@@ -47,7 +47,6 @@ MODELS = [
 def search_web(query):
     """Pesquisa na web usando a API do DuckDuckGo (gratuita)"""
     try:
-        # Usar a API do DuckDuckGo (gratuita, sem chave)
         url = f"https://api.duckduckgo.com/?q={quote_plus(query)}&format=json&pretty=1"
         response = requests.get(url, timeout=10)
         
@@ -55,7 +54,6 @@ def search_web(query):
             data = response.json()
             results = []
             
-            # Pegar o resumo (Abstract)
             if data.get('Abstract'):
                 results.append({
                     'title': data.get('Heading', 'Resultado'),
@@ -63,12 +61,10 @@ def search_web(query):
                     'link': data.get('AbstractURL', '#')
                 })
             
-            # Pegar os resultados relacionados
             for item in data.get('RelatedTopics', [])[:5]:
                 if 'Text' in item:
                     text = item['Text']
                     link = item.get('FirstURL', '#')
-                    # Separar título do texto
                     parts = text.split(' - ', 1)
                     title = parts[0] if len(parts) > 0 else text[:50]
                     snippet = parts[1] if len(parts) > 1 else text
@@ -78,7 +74,7 @@ def search_web(query):
                         'link': link
                     })
             
-            return results[:5]  # Limitar a 5 resultados
+            return results[:5]
         else:
             return []
     except Exception as e:
@@ -86,7 +82,6 @@ def search_web(query):
         return []
 
 def format_search_results(results):
-    """Formata os resultados da pesquisa para o prompt"""
     if not results:
         return "Nenhum resultado encontrado."
     
@@ -109,7 +104,7 @@ def chat():
         data = request.json
         messages = data.get('messages', [])
         personality_key = data.get('personality', 'default')
-        search_enabled = data.get('search', False)  # Nova flag
+        search_enabled = data.get('search', False)
         
         if not messages:
             return jsonify({'error': 'Nenhuma mensagem'}), 400
@@ -117,11 +112,12 @@ def chat():
         user_message = messages[-1]['content'] if messages else ""
         system_prompt = PERSONALITIES.get(personality_key, PERSONALITIES["default"])
 
-        # ===== DETECTAR SE DEVE PESQUISAR =====
+        # Detectar se deve pesquisar
         search_keywords = ['pesquisar', 'buscar', 'procurar', 'google', 'internet', 'atual', 'agora', 'notícia', 'evento']
         should_search = search_enabled or any(kw in user_message.lower() for kw in search_keywords)
         
         search_results_text = ""
+        results = []
         if should_search:
             print(f"🔍 Pesquisando: {user_message}")
             results = search_web(user_message)
@@ -131,7 +127,7 @@ def chat():
             else:
                 search_results_text = "Não foi possível obter resultados da pesquisa."
 
-        # ===== CONSTRUIR PROMPT =====
+        # Construir prompt
         if search_results_text:
             prompt = f"""{system_prompt}
 
@@ -150,7 +146,7 @@ Pergunta do usuário: {user_message}
 
 Resposta:"""
 
-        # ===== CHAMAR A API =====
+        # Chamar a API
         for model in MODELS:
             try:
                 payload = {
@@ -173,8 +169,6 @@ Resposta:"""
                         'search_used': should_search,
                         'search_results': results if should_search else []
                     }), 200
-                else:
-                    print(f"Erro no modelo {model}: {response.status_code}")
             except Exception as e:
                 print(f"Erro com {model}: {str(e)}")
                 continue
@@ -198,7 +192,6 @@ def health():
 
 @app.route('/api/search', methods=['POST'])
 def search_only():
-    """Endpoint para pesquisa direta (sem chat)"""
     try:
         data = request.json
         query = data.get('query', '')

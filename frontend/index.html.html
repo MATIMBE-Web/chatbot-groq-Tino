@@ -2,8 +2,13 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🧠 Chatbot com Memória</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#667eea" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>🔍 Chatbot com Pesquisa</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
 
     <style>
         * {
@@ -47,7 +52,6 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         }
 
-        /* HEADER */
         .header {
             background: linear-gradient(135deg, #667eea, #764ba2);
             padding: 14px 20px;
@@ -109,7 +113,10 @@
             background: rgba(255, 255, 255, 0.35);
         }
 
-        /* MENSAGENS */
+        .header-actions button.search-active {
+            background: rgba(76, 175, 80, 0.5);
+        }
+
         #messages {
             flex: 1;
             overflow-y: auto;
@@ -130,6 +137,7 @@
             line-height: 1.6;
             word-wrap: break-word;
             animation: fadeIn 0.3s ease;
+            position: relative;
         }
 
         .msg.user {
@@ -167,7 +175,7 @@
             margin-top: 6px;
         }
 
-        .msg .memory-badge {
+        .msg .search-badge {
             font-size: 10px;
             background: #4ade80;
             color: #1a1a2e;
@@ -177,7 +185,7 @@
             margin-top: 6px;
         }
 
-        body.dark .msg .memory-badge {
+        body.dark .msg .search-badge {
             background: #2a5a3a;
             color: #a0d0a0;
         }
@@ -193,7 +201,6 @@
             }
         }
 
-        /* DIGITAÇÃO */
         .typing-indicator {
             display: none;
             padding: 12px 18px;
@@ -246,7 +253,6 @@
             }
         }
 
-        /* INPUT */
         .input-area {
             padding: 14px 24px;
             background: white;
@@ -374,7 +380,6 @@
             background: #3a4a7a;
         }
 
-        /* STATUS */
         .status-bar {
             padding: 8px 24px;
             background: #f8f9fa;
@@ -432,7 +437,6 @@
             gap: 4px;
         }
 
-        /* SCROLLBAR */
         #messages::-webkit-scrollbar {
             width: 6px;
         }
@@ -444,7 +448,6 @@
             border-radius: 3px;
         }
 
-        /* RESPONSIVIDADE */
         @media (max-width: 600px) {
             #chat {
                 height: 100vh;
@@ -493,7 +496,6 @@
             }
         }
 
-        /* TOAST */
         .toast {
             position: fixed;
             bottom: 30px;
@@ -527,20 +529,41 @@
             background: #60a5fa;
             color: #1a1a2e;
         }
+
+        .search-results {
+            background: #f0f8ff;
+            border-left: 3px solid #667eea;
+            padding: 10px 14px;
+            margin: 6px 0;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        body.dark .search-results {
+            background: #1a2a4a;
+            border-left-color: #667eea;
+        }
+
+        .search-results a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .search-results a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
-
 <body>
 
     <div id="toast" class="toast"></div>
 
     <div id="chat">
 
-        <!-- HEADER -->
         <div class="header">
             <h1>
-                <span>🧠</span>
-                Chatbot com Memória
+                <span>🔍</span>
+                Chatbot com Pesquisa
             </h1>
             <div class="header-actions">
                 <select id="personalitySelect">
@@ -552,18 +575,16 @@
                     <option value="fitness">🏋️ Fitness</option>
                     <option value="coach">🎯 Coach</option>
                 </select>
+                <button onclick="toggleSearch()" id="searchBtn" title="Pesquisar na web">🔍</button>
                 <button onclick="toggleDarkMode()" id="darkBtn" title="Modo escuro">🌙</button>
                 <button onclick="clearChat()" title="Limpar conversa">🗑️</button>
                 <button onclick="exportChat()" title="Exportar conversa">📥</button>
                 <button onclick="toggleSound()" id="soundBtn" title="Som">🔊</button>
-                <button onclick="clearMemory()" title="Limpar memória" style="background:rgba(255,50,50,0.3);">🧹</button>
             </div>
         </div>
 
-        <!-- MENSAGENS -->
         <div id="messages"></div>
 
-        <!-- INDICADOR DE DIGITAÇÃO -->
         <div class="typing-indicator" id="typingIndicator">
             <div class="dots">
                 <span></span>
@@ -572,11 +593,10 @@
             </div>
         </div>
 
-        <!-- INPUT -->
         <div class="input-area">
             <div class="input-wrapper">
-                <textarea id="input" rows="1" placeholder="Digite sua pergunta em português... (Enter para enviar)"></textarea>
-                <div class="input-hint">🧠 O bot lembra de conversas anteriores! • 🇧🇷 Português</div>
+                <textarea id="input" rows="1" placeholder="Digite sua pergunta... (Enter para enviar)"></textarea>
+                <div class="input-hint">🔍 Ative a pesquisa para respostas atualizadas • 🇧🇷 Português</div>
             </div>
             <div class="input-actions">
                 <button class="icon-btn" onclick="attachFile()" title="Anexar arquivo">📎</button>
@@ -584,7 +604,6 @@
             </div>
         </div>
 
-        <!-- STATUS -->
         <div class="status-bar">
             <div>
                 <span class="status-dot online" id="statusDot"></span>
@@ -592,8 +611,7 @@
             </div>
             <div class="status-right">
                 <span>💬 <span id="msgCount">0</span></span>
-                <span>🧠 <span id="memoryCount">0</span> msgs</span>
-                <span>🤖 <span id="modelName">Groq</span></span>
+                <span>🔍 <span id="searchStatus">Desativada</span></span>
                 <span>🎭 <span id="currentPersonality">Assistente</span></span>
             </div>
         </div>
@@ -603,13 +621,12 @@
         // ============================================================
         // CONFIGURAÇÕES
         // ============================================================
-        const API_URL = 'http://localhost:5000/api/chat';
-        const SESSION_ID = 'user_' + Date.now(); // ID único para esta sessão
+        const API_URL = '/api/chat';
         let isWaiting = false;
         let messageCount = 0;
-        let memoryCount = 0;
         let soundEnabled = true;
         let darkMode = false;
+        let searchEnabled = false;
 
         // ============================================================
         // DOM ELEMENTOS
@@ -621,8 +638,7 @@
         const statusDot = document.getElementById('statusDot');
         const statusText = document.getElementById('statusText');
         const msgCountEl = document.getElementById('msgCount');
-        const memoryCountEl = document.getElementById('memoryCount');
-        const modelNameEl = document.getElementById('modelName');
+        const searchStatusEl = document.getElementById('searchStatus');
         const currentPersonalityEl = document.getElementById('currentPersonality');
         const personalitySelect = document.getElementById('personalitySelect');
         const toast = document.getElementById('toast');
@@ -641,7 +657,7 @@
         // FUNÇÕES
         // ============================================================
 
-        function addMessage(role, content, memoryCount = null) {
+        function addMessage(role, content, searchUsed = false) {
             const wrapper = document.createElement('div');
             wrapper.className = 'msg ' + role;
 
@@ -650,15 +666,16 @@
             label.textContent = role === 'user' ? '👤 Você' : '🤖 Assistente';
             wrapper.appendChild(label);
 
-            const textNode = document.createTextNode(content);
-            wrapper.appendChild(textNode);
-
-            if (role === 'bot' && memoryCount !== null) {
+            // Se for resposta do bot e tiver pesquisa
+            if (role === 'bot' && searchUsed) {
                 const badge = document.createElement('span');
-                badge.className = 'memory-badge';
-                badge.textContent = '🧠 ' + memoryCount + ' mensagens na memória';
+                badge.className = 'search-badge';
+                badge.textContent = '🔍 Pesquisou na web';
                 wrapper.appendChild(badge);
             }
+
+            const textNode = document.createTextNode(content);
+            wrapper.appendChild(textNode);
 
             const time = document.createElement('span');
             time.className = 'time';
@@ -692,6 +709,15 @@
             sendBtn.disabled = false;
         }
 
+        function toggleSearch() {
+            searchEnabled = !searchEnabled;
+            const btn = document.getElementById('searchBtn');
+            btn.textContent = searchEnabled ? '🔍 Ativado' : '🔍';
+            btn.classList.toggle('search-active', searchEnabled);
+            searchStatusEl.textContent = searchEnabled ? 'Ativada' : 'Desativada';
+            showToast(searchEnabled ? 'Pesquisa na web ativada!' : 'Pesquisa na web desativada', 'info');
+        }
+
         async function sendMessage() {
             const text = input.value.trim();
             if (!text || isWaiting) return;
@@ -713,7 +739,7 @@
                     body: JSON.stringify({
                         messages: [{ role: 'user', content: text }],
                         personality: personality,
-                        session_id: SESSION_ID
+                        search: searchEnabled
                     })
                 });
 
@@ -721,17 +747,7 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Atualiza o contador de memória
-                    if (data.history_count) {
-                        memoryCount = data.history_count;
-                        memoryCountEl.textContent = memoryCount;
-                    }
-
-                    addMessage('bot', data.content, data.history_count);
-
-                    if (data.model) {
-                        modelNameEl.textContent = data.model.split('/').pop() || 'Groq';
-                    }
+                    addMessage('bot', data.content, data.search_used);
                     currentPersonalityEl.textContent = personalityName;
                 } else {
                     addMessage('bot', '❌ Erro: ' + (data.error || 'Erro desconhecido'));
@@ -783,30 +799,12 @@
         }
 
         function clearChat() {
-            if (confirm('Tem certeza que deseja limpar o chat (apenas visual)?')) {
+            if (confirm('Tem certeza que deseja limpar a conversa?')) {
                 messagesDiv.innerHTML = '';
                 messageCount = 0;
                 msgCountEl.textContent = '0';
-                addMessage('bot', '🧹 Chat limpo! Mas a memória do bot continua intacta.');
-                showToast('Chat limpo!', 'success');
-            }
-        }
-
-        async function clearMemory() {
-            if (confirm('Tem certeza que deseja APAGAR TODA A MEMÓRIA do bot?\nIsso fará ele esquecer tudo!')){
-                try {
-                    const response = await fetch(`http://localhost:5000/api/clear_memory/${SESSION_ID}`, {
-                        method: 'DELETE'
-                    });
-                    if (response.ok) {
-                        memoryCount = 0;
-                        memoryCountEl.textContent = '0';
-                        showToast('🧠 Memória apagada! O bot esqueceu tudo.', 'success');
-                        addMessage('bot', '🧠 Minha memória foi apagada! Começamos do zero.');
-                    }
-                } catch (error) {
-                    showToast('Erro ao apagar memória', 'error');
-                }
+                addMessage('bot', '🧹 Conversa limpa! Pergunte o que quiser.');
+                showToast('Conversa limpa!', 'success');
             }
         }
 
@@ -817,10 +815,9 @@
                 return;
             }
 
-            let text = '🧠 CHATBOT COM MEMÓRIA - CONVERSA\n';
+            let text = '🔍 CHATBOT COM PESQUISA - CONVERSA\n';
             text += '='.repeat(50) + '\n';
             text += 'Data: ' + new Date().toLocaleString() + '\n';
-            text += 'Sessão: ' + SESSION_ID + '\n';
             text += 'Personalidade: ' + personalityNames[personalitySelect.value] + '\n\n';
 
             msgs.forEach(msg => {
@@ -828,7 +825,7 @@
                 const content = msg.textContent
                     .replace(role, '')
                     .replace(/\d{2}:\d{2}:\d{2}/g, '')
-                    .replace(/🧠 \d+ mensagens na memória/g, '')
+                    .replace(/🔍 Pesquisou na web/g, '')
                     .trim();
                 text += role + '\n' + content + '\n\n';
             });
@@ -899,7 +896,7 @@
         // ============================================================
         async function checkHealth() {
             try {
-                const response = await fetch('http://localhost:5000/api/health');
+                const response = await fetch('/api/health');
                 if (response.ok) {
                     statusDot.className = 'status-dot online';
                     statusText.textContent = 'Online';
@@ -916,10 +913,10 @@
         // ============================================================
         // INICIALIZAÇÃO
         // ============================================================
-        addMessage('bot', '🧠 Olá! Agora tenho MEMÓRIA!\n\n' +
-            '🇧🇷 Falo português e lembro de conversas anteriores.\n' +
-            '🎭 Escolha uma personalidade no menu acima.\n' +
-            '💡 Pergunte algo e depois pergunte "O que eu falei antes?"\n\n' +
+        addMessage('bot', '🔍 Olá! Agora posso PESQUISAR na internet!\n\n' +
+            '🔍 Ative a pesquisa no botão acima para respostas atualizadas.\n' +
+            '🎭 Escolha uma personalidade no menu.\n' +
+            '💡 Exemplo: "O que aconteceu hoje no mundo?"\n\n' +
             'Vamos conversar!');
 
         currentPersonalityEl.textContent = personalityNames[personalitySelect.value] || 'Assistente';
@@ -927,8 +924,8 @@
         setInterval(checkHealth, 15000);
         checkHealth();
 
-        console.log('🧠 Chatbot com Memória - Sessão:', SESSION_ID);
-        console.log('🤖 Frontend pronto!');
+        console.log('🔍 Chatbot com pesquisa - Frontend pronto!');
+        console.log('📱 Suporta PWA - Adicione à tela inicial!');
     </script>
 </body>
 </html>
